@@ -12,17 +12,13 @@ async function igdb(event: APIGatewayEvent, context: Context, callback) {
     console.log(
       `Sending request to ${apiUrl}/${endpoint}\n\nWith body: ${event.body}\nAPI Key: ${apiKey}`,
     )
-    const response = await axios.post(
-      `${apiUrl}/${endpoint}`,
-      JSON.stringify(event.body),
-      {
-        headers: {
-          Accept: 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'user-key': apiKey,
-        },
+    const response = await axios.post(`${apiUrl}/${endpoint}`, event.body, {
+      headers: {
+        Accept: 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'user-key': apiKey,
       },
-    )
+    })
 
     return callback(null, {
       response: response,
