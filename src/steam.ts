@@ -10,7 +10,8 @@ const pathRewrite = (path: string) => {
 
   const replacementMap = {
     '/steam/getAppList': '/ISteamApps/GetAppList/v0002',
-    '/steam/getOwnedGames': '/IPlayerService/GetOwnedGames/v0001',
+    '/steam/getOwnedGames': '/IPlayerService/GetOwnedGames/v0001', //&steamid=STEAM_ID
+    '/steam/getSteamId': '/ISteamUser/ResolveVanityURL/v0001/', //&vanityurl=USER_NAME
   }
 
   Object.keys(replacementMap).some(
