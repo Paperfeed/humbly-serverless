@@ -1,35 +1,34 @@
 import middy from '@middy/core'
-import { APIGatewayEvent, Context } from 'aws-lambda'
+import { APIGatewayEvent } from 'aws-lambda'
+import fetch from 'node-fetch'
 
 import { auth } from './middleware/auth'
-const axios = require('axios').default
 
-async function igdb(event: APIGatewayEvent, context: Context, callback) {
+async function igdb(event: APIGatewayEvent /*, context: Context*/) {
   const { IGDB_API_URL: apiUrl, IGDB_API_KEY: apiKey } = process.env
 
   const endpoint = event.path.split('/')[2]
-  try {
-    console.log(
-      `Sending request to ${apiUrl}/${endpoint}\n\nWith body: ${event.body}\nAPI Key: ${apiKey}`,
-    )
-    const response = await axios.post(`${apiUrl}/${endpoint}`, event.body, {
-      headers: {
-        Accept: 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'user-key': apiKey,
-      },
-    })
+  console.log(
+    `Sending request to ${apiUrl}/${endpoint}\n\nWith body: ${event.body}\nAPI Key: ${apiKey}`,
+  )
 
-    return callback(null, {
-      response: response,
-      statusCode: 200,
-    })
-  } catch (error) {
-    console.log('An error occurred:', JSON.stringify(error, null, 2))
-    return callback({
-      body: JSON.stringify(error),
-      statusCode: 200,
-    })
+  const response = await fetch(`${apiUrl}/${endpoint}`, {
+    body: event.body,
+    headers: {
+      Accept: 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'user-key': apiKey,
+    },
+    method: 'POST',
+  })
+
+  const data = await response.json()
+  return {
+    body: JSON.stringify(data, null, 2),
+    headers: {
+      'content-type': 'application/json',
+    },
+    statusCode: response.status,
   }
 }
 
