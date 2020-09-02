@@ -9,7 +9,7 @@ const pathRewrite = (path: string) => {
   let newPath = ''
 
   const replacementMap = {
-    '/steam/getAllGames': '/ISteamApps/GetAppList/v0002',
+    '/steam/getAppList': '/ISteamApps/GetAppList/v0002',
     '/steam/getOwnedGames': '/IPlayerService/GetOwnedGames/v0001',
   }
 
