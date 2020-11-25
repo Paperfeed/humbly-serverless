@@ -1,19 +1,21 @@
-export function auth() {
-  const { APP_ID: appId } = process.env
+import { PromiseHandler } from '@lambda-middleware/utils'
+import { APIGatewayEvent, Context } from 'aws-lambda'
 
-  return {
-    before: (handler, next) => {
-      if (handler.event.headers.appid !== appId) {
-        console.log('Unauthorized request')
-        return handler.callback(null, {
-          body: JSON.stringify({
-            error: 'Unauthorized',
-          }),
-          statusCode: 401,
-        })
-      }
+export const auth = () => <R>(handler: PromiseHandler) => async (
+  event: APIGatewayEvent,
+  context: Context,
+): Promise<R> => {
+  try {
+    const { APP_ID: appId } = process.env
 
-      return next()
-    },
+    if (event.headers.appid !== appId) {
+      throw new Error('Unauthorized request')
+    }
+
+    return handler(event, context)
+  } catch (error) {
+    console.log('Unauthorized request')
+    error.statusCode = 401
+    throw error
   }
 }
