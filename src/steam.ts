@@ -1,4 +1,4 @@
-import middy from '@middy/core'
+import { compose } from '@lambda-middleware/compose'
 import { APIGatewayEvent } from 'aws-lambda'
 import fetch from 'node-fetch'
 import qs from 'qs'
@@ -32,15 +32,14 @@ const pathRewrite = (path: string) => {
 
 async function steam(event: APIGatewayEvent /*, context: Context*/) {
   const { STEAM_API_URL: apiUrl, STEAM_API_KEY: apiKey } = process.env
-
-  console.log(event.path)
   const endpoint = pathRewrite(event.path)
 
-  console.log('ENDPOINT', endpoint)
   const queryParameters = {
     ...event.queryStringParameters,
     format: 'json',
-    key: apiKey,
+    key: /GetAppList/.test(endpoint)
+      ? (Math.random() + 1).toString(36).substring(7)
+      : apiKey,
   }
 
   const url = `${apiUrl}${endpoint}?${qs.stringify(queryParameters)}`
@@ -52,7 +51,6 @@ async function steam(event: APIGatewayEvent /*, context: Context*/) {
     },
   })
 
-  console.log(response)
   const data = await response.json()
   return {
     body: JSON.stringify(data, null, 2),
@@ -60,4 +58,7 @@ async function steam(event: APIGatewayEvent /*, context: Context*/) {
   }
 }
 
-export const handler = middy(steam).use(auth())
+export const handler = compose(
+  // Middlewares
+  auth(),
+)(steam)
