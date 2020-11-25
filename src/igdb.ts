@@ -1,28 +1,31 @@
-import middy from '@middy/core'
-import { APIGatewayEvent } from 'aws-lambda'
+import { compose } from '@lambda-middleware/compose'
+import { APIGatewayEvent, ProxyHandler } from 'aws-lambda'
 import fetch from 'node-fetch'
 
 import { auth } from './middleware/auth'
+import { twitchToken } from './middleware/twitch_token'
 
 async function igdb(event: APIGatewayEvent /*, context: Context*/) {
-  const { IGDB_API_URL: apiUrl, IGDB_API_KEY: apiKey } = process.env
+  const { IGDB_API_URL: apiUrl } = process.env
 
   const endpoint = event.path.split('/')[2]
-  console.log(
-    `Sending request to ${apiUrl}/${endpoint}\n\nWith body: ${event.body}\nAPI Key: ${apiKey}`,
-  )
+  const url = `${apiUrl}/${endpoint}`
+  console.log(`Sending request to ${url}\n\nWith body: ${event.body}`)
 
-  const response = await fetch(`${apiUrl}/${endpoint}`, {
+  const response = await fetch(`${url}`, {
     body: event.body,
     headers: {
       Accept: 'application/json',
       'Access-Control-Allow-Origin': '*',
-      'user-key': apiKey,
+      Authorization: `Bearer ${event.headers.Authorization}`,
+      'Client-ID': event.headers.clientID,
     },
     method: 'POST',
   })
 
   const data = await response.json()
+
+  console.log(`Received data response:\n${JSON.stringify(data, null, 2)}`)
   return {
     body: JSON.stringify(data, null, 2),
     headers: {
@@ -32,4 +35,8 @@ async function igdb(event: APIGatewayEvent /*, context: Context*/) {
   }
 }
 
-export const handler = middy(igdb).use(auth())
+export const handler: ProxyHandler = compose(
+  // Middlewares
+  auth(),
+  twitchToken(),
+)(igdb)
